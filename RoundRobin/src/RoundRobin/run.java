@@ -8,8 +8,8 @@ public class run {
     static int processesNum;
     static int contextSwitch;
     static int time = 0;
-    static  double avgWaiting = 0;
-    static double avgTurnAround = 0;
+    static  float avgWaiting = 0;
+    static float avgTurnAround = 0;
     static process p = null;
     static List<process> processes = new ArrayList<process>();
     static Scanner input = new Scanner(System.in);
@@ -37,17 +37,25 @@ public class run {
         }
     }
 
+    public static void calcCompletion()
+    {
+        for (int i =0; i<processes.size(); i++)
+        {
+            processes.get(i).completionTime = processes.get(i).turnAroundTime + processes.get(i).getArrivalTime();
+        }
+    }
+
     public  static boolean areExecuted()
     {
-        boolean check = true;
+        boolean isRemaining = true;
         for (int i=0; i<processes.size(); i++)
         {
             if(processes.get(i).ExecutionTime != 0) {
-                check = false;
+                isRemaining = false;
                 break;
             }
         }
-        return check;
+        return isRemaining;
     }
 
 
@@ -116,7 +124,44 @@ public class run {
                 time++;
         }
        calcturnAround();
+       calcCompletion();
+       calcAvgWaiting();
+       calcAvgTurnAround();
+    }
 
+    public static void calcAvgWaiting()
+    {
+        for (int i=0; i<processes.size(); i++)
+        {
+            avgWaiting += processes.get(i).waitingTime;
+        }
+        avgWaiting = avgWaiting / processes.size();
+    }
+
+    public static void calcAvgTurnAround()
+    {
+        for (int i=0; i<processes.size(); i++)
+        {
+            avgTurnAround += processes.get(i).turnAroundTime;
+        }
+        avgTurnAround = avgTurnAround / processes.size();
+    }
+
+    public static void print()
+    {
+        System.out.println("Process | Arrival Time | Execution Time | Completion Time | Waiting Time | Turn Around Time");
+        for (int i=0; i<processes.size(); i++)
+        {
+            System.out.println(processes.get(i).name + " \t\t|\t"
+                            + processes.get(i).getArrivalTime() + "\t\t\t|\t\t"
+                            + processes.get(i).extime + "\t\t|\t\t"
+                            + processes.get(i).completionTime + "\t\t|\t\t"
+                            + processes.get(i).waitingTime + "\t\t|\t\t"
+                            + processes.get(i).turnAroundTime);
+        }
+
+        System.out.println("\nAverage Waiting time = " + avgWaiting);
+        System.out.println("Average Turn Around Time = " + avgTurnAround);
     }
 
 
@@ -127,16 +172,16 @@ public class run {
         processesNum = input.nextInt();
         set(processesNum);
         sort();
+
         System.out.println("Enter time Quantum");
         timeQuantum = input.nextInt();
         System.out.println("Enter context switch ");
         contextSwitch = input.nextInt();
+
         run(timeQuantum, contextSwitch);
+        print();
 
 
-        for (int i = 0; i < processesNum; i++) {
-            System.out.println(processes.get(i).name + "\t" + processes.get(i).waitingTime + "\t" + processes.get(i).turnAroundTime) ;
-        }
 
 
     }

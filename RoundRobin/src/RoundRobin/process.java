@@ -7,6 +7,7 @@ public class process {
     public int ExecutionTime;
     public int waitingTime;
     public int turnAroundTime;
+    public int completionTime;
     public int extime;
     public boolean isFirst = true;
 

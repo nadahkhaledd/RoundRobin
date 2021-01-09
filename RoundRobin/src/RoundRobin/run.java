@@ -7,11 +7,12 @@ public class run {
     static int timeQuantum;
     static int processesNum;
     static int contextSwitch;
-    static int time = 0;
+    static int clock = 0;
     static  float avgWaiting = 0;
     static float avgTurnAround = 0;
     static process p = null;
-    static List<process> processes = new ArrayList<process>();
+    static List<process> processes = new ArrayList<>();
+    static Queue<process> execute = new LinkedList<>();
     static Scanner input = new Scanner(System.in);
 
     public static void set(int num) {
@@ -26,31 +27,42 @@ public class run {
     }
 
     public static void sort() {
-        Collections.sort(processes, Comparator.comparing(process::getArrivalTime));
+        processes.sort(Comparator.comparing(process::getArrivalTime));
     }
 
-    public static void calcturnAround()
+    public static void calcTurnAround()
     {
-        for (int i =0; i<processes.size(); i++)
-        {
-            processes.get(i).turnAroundTime += processes.get(i).waitingTime + processes.get(i).extime;
-        }
+        for (RoundRobin.process process : processes)
+            process.turnAroundTime += process.waitingTime + process.extime;
     }
 
     public static void calcCompletion()
     {
-        for (int i =0; i<processes.size(); i++)
-        {
-            processes.get(i).completionTime = processes.get(i).turnAroundTime + processes.get(i).getArrivalTime();
-        }
+        for (RoundRobin.process process : processes)
+            process.completionTime = process.turnAroundTime + process.getArrivalTime();
+    }
+
+    public static void calcAvgWaiting()
+    {
+        for (RoundRobin.process process : processes)
+            avgWaiting += process.waitingTime;
+
+        avgWaiting = avgWaiting / processes.size();
+    }
+
+    public static void calcAvgTurnAround()
+    {
+        for (RoundRobin.process process : processes)
+            avgTurnAround += process.turnAroundTime;
+
+        avgTurnAround = avgTurnAround / processes.size();
     }
 
     public  static boolean areExecuted()
     {
         boolean isRemaining = true;
-        for (int i=0; i<processes.size(); i++)
-        {
-            if(processes.get(i).ExecutionTime != 0) {
+        for (RoundRobin.process process : processes) {
+            if (process.ExecutionTime != 0) {
                 isRemaining = false;
                 break;
             }
@@ -58,112 +70,89 @@ public class run {
         return isRemaining;
     }
 
-
-    public static void run( int quantum, int context)
+    public static void checkExecutions()
     {
-        Queue<process> execute = new LinkedList<process>();
+        for (RoundRobin.process process : processes) {
+            if (!(process.getArrivalTime() > clock) && !process.isDone) {
+                process.waitingTime = clock - process.getArrivalTime();
+                execute.add(process);
+                process.isDone = true;
+            }
+        }
+    }
+
+    public static void intoTheQueue(process current)
+    {
+        if (processes.contains(current))
+            execute.add(processes.get(processes.indexOf(current)));
+    }
+
+    public static void addWait(int time, int context)
+    {
+        for (RoundRobin.process process : processes) {
+            if (execute.contains(process))
+                process.waitingTime += time + context;
+        }
+    }
+
+    public static void calculations( int quantum, int context)
+    {
+
         process current  = null;
         while(!areExecuted())
         {
-            System.out.println("while");
-            for(int i=0; i<processes.size(); i++)
-            {
-                if(processes.get(i).getArrivalTime() <= time && processes.get(i).isFirst)
-                {
-                    System.out.println("if");
-                    processes.get(i).waitingTime = time - processes.get(i).getArrivalTime();
-                    execute.add(processes.get(i));
-                    processes.get(i).isFirst = false;
-                }
-            }
+            checkExecutions();
             if(current != null)
             {
-                    if (processes.contains(current))
-                    {
-                        execute.add(processes.get(processes.indexOf(current)));
-                    }
-                    current = null;
+                intoTheQueue(current);
+                current = null;
             }
             if(!execute.isEmpty())
             {
                 if(execute.peek().ExecutionTime > quantum)
                 {
-                    time += quantum;
+                    clock += quantum;
                     current = execute.peek();
                     execute.peek().ExecutionTime -= quantum;
                     processes.get(processes.indexOf(execute.peek())).turnAroundTime += context;
                     execute.poll();
-                    for (int i=0; i<processes.size(); i++)
-                    {
-                        if(execute.contains(processes.get(i)))
-                        {
-                            processes.get(i).waitingTime += quantum + context;
-                        }
-                    }
-                    time += context;
-                    continue;
+                    addWait(quantum, context);
                 }
                 else
                 {
-                    int tempexe = execute.peek().ExecutionTime;
-                    time+= execute.peek().ExecutionTime;
+                    int tempExecution = execute.peek().ExecutionTime;
+                    clock+= execute.peek().ExecutionTime;
                     execute.peek().ExecutionTime = 0;
                     processes.get(processes.indexOf(execute.peek())).turnAroundTime += context;
                     execute.poll();
-                    for (int i=0; i<processes.size(); i++)
-                    {
-                        if(execute.contains(processes.get(i))) {
-                            processes.get(i).waitingTime += tempexe + context;
-                        }
-                    }
-                    time += context;
-                    continue;
+                    addWait(tempExecution, context);
                 }
+                clock += context;
             }
             else
-                time++;
+                clock++;
         }
-       calcturnAround();
+       calcTurnAround();
        calcCompletion();
        calcAvgWaiting();
        calcAvgTurnAround();
     }
 
-    public static void calcAvgWaiting()
-    {
-        for (int i=0; i<processes.size(); i++)
-        {
-            avgWaiting += processes.get(i).waitingTime;
-        }
-        avgWaiting = avgWaiting / processes.size();
-    }
-
-    public static void calcAvgTurnAround()
-    {
-        for (int i=0; i<processes.size(); i++)
-        {
-            avgTurnAround += processes.get(i).turnAroundTime;
-        }
-        avgTurnAround = avgTurnAround / processes.size();
-    }
-
     public static void print()
     {
         System.out.println("Process | Arrival Time | Execution Time | Completion Time | Waiting Time | Turn Around Time");
-        for (int i=0; i<processes.size(); i++)
-        {
-            System.out.println(processes.get(i).name + " \t\t|\t"
-                            + processes.get(i).getArrivalTime() + "\t\t\t|\t\t"
-                            + processes.get(i).extime + "\t\t|\t\t"
-                            + processes.get(i).completionTime + "\t\t|\t\t"
-                            + processes.get(i).waitingTime + "\t\t|\t\t"
-                            + processes.get(i).turnAroundTime);
+        for (RoundRobin.process process : processes) {
+            System.out.println(process.name + " \t\t|\t"
+                    + process.getArrivalTime() + "\t\t\t|\t\t"
+                    + process.extime + "\t\t|\t\t"
+                    + process.completionTime + "\t\t|\t\t"
+                    + process.waitingTime + "\t\t|\t\t"
+                    + process.turnAroundTime);
         }
 
         System.out.println("\nAverage Waiting time = " + avgWaiting);
         System.out.println("Average Turn Around Time = " + avgTurnAround);
     }
-
 
 
     public static void main(String[] args) {
@@ -178,7 +167,7 @@ public class run {
         System.out.println("Enter context switch ");
         contextSwitch = input.nextInt();
 
-        run(timeQuantum, contextSwitch);
+        calculations(timeQuantum, contextSwitch);
         print();
 
 

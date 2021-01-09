@@ -9,14 +9,13 @@ public class process {
     public int turnAroundTime;
     public int completionTime;
     public int extime;
-    public boolean isFirst = true;
+    public boolean isDone = false;
 
     public process(String name, int ArrivalTime, int ExecutionTime) {
         this.name = name;
         this.ArrivalTime = ArrivalTime;
         this.ExecutionTime = ExecutionTime;
-        if(extime == 0)
-            extime = ExecutionTime;
+        extime = ExecutionTime;
     }
 
     public int getArrivalTime() {

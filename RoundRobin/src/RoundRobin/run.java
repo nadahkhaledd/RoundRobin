@@ -60,14 +60,14 @@ public class run {
 
     public  static boolean areExecuted()
     {
-        boolean isRemaining = true;
+        boolean isFinished = true;
         for (RoundRobin.process process : processes) {
             if (process.ExecutionTime != 0) {
-                isRemaining = false;
+                isFinished = false;
                 break;
             }
         }
-        return isRemaining;
+        return isFinished;
     }
 
     public static void checkExecutions()
@@ -159,6 +159,7 @@ public class run {
 
         System.out.println("Enter number of processes");
         processesNum = input.nextInt();
+
         set(processesNum);
         sort();
 
